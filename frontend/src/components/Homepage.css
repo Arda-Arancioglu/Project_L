@@ -30,7 +30,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -41,9 +42,24 @@
 .homepage-subtitle {
   font-size: 1.5rem;
   color: #e0e0e0;
-  margin: 0.5rem 0 2.5rem;
+  margin: 0 0 2.5rem;
   font-weight: 300;
   letter-spacing: 0.2em;
+}
+
+.homepage-greeting {
+  font-size: 1.1rem;
+  color: #aaa;
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 400;
+}
+
+.homepage.arda .homepage-greeting {
+  color: #64c8ff;
+}
+
+.homepage.askim .homepage-greeting {
+  color: #ff6496;
 }
 
 .homepage-buttons {
@@ -114,15 +130,15 @@
   .homepage-title {
     font-size: 3rem;
   }
-  
+
   .homepage-subtitle {
     font-size: 1.2rem;
   }
-  
+
   .homepage-buttons {
     max-width: 240px;
   }
-  
+
   .homepage-btn {
     padding: 0.875rem 1.5rem;
   }

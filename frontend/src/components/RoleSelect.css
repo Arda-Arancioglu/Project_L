@@ -1,0 +1,122 @@
+.role-select {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+  padding: 1rem;
+}
+
+.role-content {
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.role-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.role-content h1 {
+  font-size: 1.5rem;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  font-weight: 500;
+}
+
+.role-content p {
+  color: #888;
+  margin: 0 0 2rem;
+  font-size: 0.95rem;
+}
+
+.role-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 2rem;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.role-btn:hover {
+  transform: translateY(-4px);
+}
+
+.role-btn.arda {
+  border-color: rgba(100, 200, 255, 0.3);
+}
+
+.role-btn.arda:hover {
+  background: rgba(100, 200, 255, 0.15);
+  border-color: rgba(100, 200, 255, 0.6);
+  box-shadow: 0 8px 30px rgba(100, 200, 255, 0.2);
+}
+
+.role-btn.askim {
+  border-color: rgba(255, 100, 150, 0.3);
+}
+
+.role-btn.askim:hover {
+  background: rgba(255, 100, 150, 0.15);
+  border-color: rgba(255, 100, 150, 0.6);
+  box-shadow: 0 8px 30px rgba(255, 100, 150, 0.2);
+}
+
+.role-emoji {
+  font-size: 2.5rem;
+}
+
+.role-name {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+@media (max-width: 400px) {
+  .role-buttons {
+    flex-direction: column;
+  }
+
+  .role-btn {
+    flex-direction: row;
+    padding: 1rem 1.5rem;
+  }
+
+  .role-emoji {
+    font-size: 2rem;
+  }
+}

@@ -7,6 +7,7 @@ import "./Upload.css";
 
 interface Props {
   password: string;
+  currentUser: Uploader;
 }
 
 interface PendingFile {
@@ -19,13 +20,12 @@ interface PendingFile {
   status: "pending" | "uploading" | "done" | "error";
 }
 
-export default function Upload({ password }: Props) {
+export default function Upload({ password, currentUser }: Props) {
   const navigate = useNavigate();
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [uploader, setUploader] = useState<Uploader>("arda");
   const [album, setAlbum] = useState<Album>("us");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,7 +145,7 @@ export default function Upload({ password }: Props) {
         await commitUpload({
           password,
           reservationId: prepareRes.reservationId,
-          uploader,
+          uploader: currentUser,
           album,
           photos: doneFiles.map((f) => ({
             id: prepareRes.uploads![files.findIndex((ff) => ff.id === f.id)].id,
@@ -167,13 +167,16 @@ export default function Upload({ password }: Props) {
     setUploading(false);
   };
 
+  const userLabel = currentUser === "arda" ? "🩵 Arda" : "💗 Aşkım";
+
   return (
-    <div className="upload-page">
+    <div className={`upload-page ${currentUser}`}>
       <header className="upload-header">
         <button className="back-btn" onClick={() => navigate("/")} disabled={uploading}>
           ← Geri
         </button>
-        <h1>Fotoğraf Yükle 💝</h1>
+        <h1>Fotoğraf Yükle</h1>
+        <span className="upload-user">{userLabel}</span>
       </header>
 
       {usage && (
@@ -192,27 +195,6 @@ export default function Upload({ password }: Props) {
           </div>
         </div>
       )}
-
-      {/* Uploader Selection */}
-      <div className="selection-group">
-        <label className="selection-label">Kim yüklüyor?</label>
-        <div className="uploader-toggle">
-          <button
-            className={`toggle-btn ${uploader === "arda" ? "active arda" : ""}`}
-            onClick={() => setUploader("arda")}
-            disabled={uploading}
-          >
-            🩵 Arda
-          </button>
-          <button
-            className={`toggle-btn ${uploader === "askim" ? "active askim" : ""}`}
-            onClick={() => setUploader("askim")}
-            disabled={uploading}
-          >
-            💗 Aşkım
-          </button>
-        </div>
-      </div>
 
       {/* Album Selection */}
       <div className="selection-group">

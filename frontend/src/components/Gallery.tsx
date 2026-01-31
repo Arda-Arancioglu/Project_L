@@ -9,9 +9,10 @@ type AlbumFilter = Album | "all";
 
 interface Props {
   password: string;
+  currentUser: Uploader;
 }
 
-export default function Gallery({ password }: Props) {
+export default function Gallery({ password, currentUser }: Props) {
   const navigate = useNavigate();
   const [gallery, setGallery] = useState<GalleryData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,8 @@ export default function Gallery({ password }: Props) {
   const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [albumFilter, setAlbumFilter] = useState<AlbumFilter>("all");
+
+  const otherUser: Uploader = currentUser === "arda" ? "askim" : "arda";
 
   useEffect(() => {
     loadGallery();
@@ -229,23 +232,28 @@ export default function Gallery({ password }: Props) {
               )}
               
               <div className="lightbox-meta">
-                <span>{getAlbumLabel(selectedPhoto.album || "us")}</span>
+                <span className="uploader-badge">
+                  {selectedPhoto.uploader === "arda" ? "🩵 Arda yükledi" : "💗 Aşkım yükledi"}
+                </span>
                 <span>{formatBytes(selectedPhoto.size)}</span>
               </div>
 
               <div className="lightbox-actions">
+                {/* Current user's favorite button - prominent */}
                 <button
-                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("arda") ? "active arda" : ""}`}
-                  onClick={() => handleToggleFavorite(selectedPhoto, "arda")}
+                  className={`heart-btn main-heart ${selectedPhoto.favoritedBy?.includes(currentUser) ? "active" : ""} ${currentUser}`}
+                  onClick={() => handleToggleFavorite(selectedPhoto, currentUser)}
                 >
-                  🩵 Arda
+                  {currentUser === "arda" ? "🩵" : "💗"} {selectedPhoto.favoritedBy?.includes(currentUser) ? "Beğendin" : "Beğen"}
                 </button>
-                <button
-                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("askim") ? "active askim" : ""}`}
-                  onClick={() => handleToggleFavorite(selectedPhoto, "askim")}
-                >
-                  💗 Aşkım
-                </button>
+                
+                {/* Show if partner liked it */}
+                {selectedPhoto.favoritedBy?.includes(otherUser) && (
+                  <span className="partner-liked">
+                    {otherUser === "arda" ? "🩵 Arda beğendi" : "💗 Aşkım beğendi"}
+                  </span>
+                )}
+                
                 <button
                   className="download-btn"
                   onClick={() => handleDownload(selectedPhoto)}

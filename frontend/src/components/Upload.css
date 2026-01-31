@@ -31,6 +31,24 @@
   color: #fff;
   margin: 0;
   font-weight: 500;
+  flex: 1;
+}
+
+.upload-user {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.upload-page.arda .upload-user {
+  color: #64c8ff;
+  background: rgba(100, 200, 255, 0.15);
+}
+
+.upload-page.askim .upload-user {
+  color: #ff6496;
+  background: rgba(255, 100, 150, 0.15);
 }
 
 .usage-bar {
@@ -308,7 +326,7 @@
     flex-direction: column;
     gap: 0.2rem;
   }
-  
+
   .uploader-toggle,
   .album-toggle {
     flex-wrap: wrap;

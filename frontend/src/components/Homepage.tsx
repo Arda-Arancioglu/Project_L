@@ -1,13 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import type { Uploader } from "../types";
 import "./Homepage.css";
 
-export function Homepage() {
+interface Props {
+  currentUser: Uploader;
+}
+
+export function Homepage({ currentUser }: Props) {
   const navigate = useNavigate();
+  
+  const isArda = currentUser === "arda";
+  const greeting = isArda ? "Merhaba Arda 🩵" : "Merhaba Aşkım 💗";
 
   return (
-    <div className="homepage">
+    <div className={`homepage ${currentUser}`}>
       <div className="homepage-content">
         <h1 className="homepage-title">💕</h1>
+        <p className="homepage-greeting">{greeting}</p>
         <p className="homepage-subtitle">Galerimiz</p>
         
         <div className="homepage-buttons">

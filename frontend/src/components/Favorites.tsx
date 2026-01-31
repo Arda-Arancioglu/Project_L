@@ -4,13 +4,14 @@ import { getGallery, getSignedUrl, toggleFavorite } from "../api";
 import type { PhotoMeta, Uploader } from "../types";
 import "./Favorites.css";
 
-type FavoriteTab = "arda" | "askim" | "together";
+type FavoriteTab = "mine" | "theirs" | "together";
 
 interface Props {
   password: string;
+  currentUser: Uploader;
 }
 
-export function Favorites({ password }: Props) {
+export function Favorites({ password, currentUser }: Props) {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<PhotoMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,10 @@ export function Favorites({ password }: Props) {
   const [activeTab, setActiveTab] = useState<FavoriteTab>("together");
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoMeta | null>(null);
+
+  const otherUser: Uploader = currentUser === "arda" ? "askim" : "arda";
+  const userLabel = currentUser === "arda" ? "🩵 Arda" : "💗 Aşkım";
+  const otherLabel = currentUser === "arda" ? "💗 Aşkım" : "🩵 Arda";
 
   useEffect(() => {
     loadFavorites();
@@ -52,11 +57,11 @@ export function Favorites({ password }: Props) {
   function getFilteredPhotos(): PhotoMeta[] {
     return photos.filter((photo) => {
       const favBy = photo.favoritedBy || [];
-      if (activeTab === "arda") {
-        return favBy.includes("arda") && !favBy.includes("askim");
+      if (activeTab === "mine") {
+        return favBy.includes(currentUser) && !favBy.includes(otherUser);
       }
-      if (activeTab === "askim") {
-        return favBy.includes("askim") && !favBy.includes("arda");
+      if (activeTab === "theirs") {
+        return favBy.includes(otherUser) && !favBy.includes(currentUser);
       }
       // together - both favorited
       return favBy.includes("arda") && favBy.includes("askim");
@@ -136,26 +141,27 @@ export function Favorites({ password }: Props) {
   }
 
   return (
-    <div className="favorites">
+    <div className={`favorites ${currentUser}`}>
       <header className="favorites-header">
         <button className="back-btn" onClick={() => navigate("/")}>
           ← Geri
         </button>
         <h1>❤️ Favoriler</h1>
+        <span className="favorites-user">{userLabel}</span>
       </header>
 
       <div className="favorites-tabs">
         <button
-          className={`tab ${activeTab === "arda" ? "active" : ""}`}
-          onClick={() => setActiveTab("arda")}
+          className={`tab ${activeTab === "mine" ? "active" : ""}`}
+          onClick={() => setActiveTab("mine")}
         >
-          Arda'nın ❤️
+          Benim ❤️
         </button>
         <button
-          className={`tab ${activeTab === "askim" ? "active" : ""}`}
-          onClick={() => setActiveTab("askim")}
+          className={`tab ${activeTab === "theirs" ? "active" : ""}`}
+          onClick={() => setActiveTab("theirs")}
         >
-          Aşkım'ın ❤️
+          {otherLabel}'ın ❤️
         </button>
         <button
           className={`tab ${activeTab === "together" ? "active" : ""}`}
@@ -170,9 +176,9 @@ export function Favorites({ password }: Props) {
           <p>
             {activeTab === "together"
               ? "İkinizin de beğendiği fotoğraf yok"
-              : activeTab === "arda"
-              ? "Arda'nın favori fotoğrafı yok"
-              : "Aşkım'ın favori fotoğrafı yok"}
+              : activeTab === "mine"
+              ? "Favori fotoğrafın yok"
+              : `${otherLabel} henüz beğenmemiş`}
           </p>
         </div>
       ) : (
@@ -208,17 +214,14 @@ export function Favorites({ password }: Props) {
               {selectedPhoto.note && <p className="note">{selectedPhoto.note}</p>}
               <div className="modal-actions">
                 <button
-                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("arda") ? "active arda" : ""}`}
-                  onClick={() => handleToggleFavorite(selectedPhoto, "arda")}
+                  className={`main-heart ${selectedPhoto.favoritedBy?.includes(currentUser) ? "active" : ""}`}
+                  onClick={() => handleToggleFavorite(selectedPhoto, currentUser)}
                 >
-                  🩵 Arda
+                  {selectedPhoto.favoritedBy?.includes(currentUser) ? "❤️" : "🤍"}
                 </button>
-                <button
-                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("askim") ? "active askim" : ""}`}
-                  onClick={() => handleToggleFavorite(selectedPhoto, "askim")}
-                >
-                  💗 Aşkım
-                </button>
+                {selectedPhoto.favoritedBy?.includes(otherUser) && (
+                  <span className="partner-liked">{otherLabel} de beğendi</span>
+                )}
                 <button
                   className="download-btn"
                   onClick={() => handleDownload(selectedPhoto)}

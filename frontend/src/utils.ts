@@ -91,6 +91,7 @@ export async function createThumbnail(
 
 // Session storage for password (not localStorage for extra safety)
 const PASSWORD_KEY = "couples_gallery_pw";
+const ROLE_KEY = "couples_gallery_role";
 
 export function savePassword(pw: string): void {
   sessionStorage.setItem(PASSWORD_KEY, pw);
@@ -102,4 +103,16 @@ export function getPassword(): string | null {
 
 export function clearPassword(): void {
   sessionStorage.removeItem(PASSWORD_KEY);
+}
+
+export function saveRole(role: string): void {
+  sessionStorage.setItem(ROLE_KEY, role);
+}
+
+export function getRole(): string | null {
+  return sessionStorage.getItem(ROLE_KEY);
+}
+
+export function clearRole(): void {
+  sessionStorage.removeItem(ROLE_KEY);
 }
