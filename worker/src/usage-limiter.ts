@@ -35,6 +35,7 @@ interface NoteItem {
   id: string;
   text: string;
   done: boolean;
+  category: string;
   createdAt: string;
   createdBy: Uploader;
 }
@@ -158,6 +159,10 @@ export class UsageLimiter implements DurableObject {
 
     if (path === "/next-date/set" && request.method === "POST") {
       return this.handleSetNextDate(request);
+    }
+
+    if (path === "/next-date/delete" && request.method === "POST") {
+      return this.handleDeleteNextDate();
     }
 
     return new Response("Not found", { status: 404 });
@@ -524,6 +529,7 @@ export class UsageLimiter implements DurableObject {
     const body = await request.json<{
       text: string;
       user: Uploader;
+      category?: string;
     }>();
 
     const data = await this.loadData();
@@ -533,6 +539,7 @@ export class UsageLimiter implements DurableObject {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       text: body.text,
       done: false,
+      category: body.category || "todo",
       createdAt: new Date().toISOString(),
       createdBy: body.user,
     };
@@ -616,6 +623,19 @@ export class UsageLimiter implements DurableObject {
     return Response.json({
       ok: true,
       nextDate: data.nextDate,
+    });
+  }
+
+  private async handleDeleteNextDate(): Promise<Response> {
+    const data = await this.loadData();
+
+    data.nextDate = null;
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      nextDate: null,
     });
   }
 }

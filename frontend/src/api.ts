@@ -218,11 +218,12 @@ export async function getNotes(
 export async function addNote(
   password: string,
   text: string,
-  user: Uploader
+  user: Uploader,
+  category: string = "todo"
 ): Promise<{ note: NoteItem }> {
   return fetchApi<{ note: NoteItem }>("/notes/add", {
     method: "POST",
-    body: JSON.stringify({ password, text, user }),
+    body: JSON.stringify({ password, text, user, category }),
   });
 }
 
@@ -264,5 +265,14 @@ export async function setNextDate(
   return fetchApi<{ nextDate: NextDateInfo }>("/next-date/set", {
     method: "POST",
     body: JSON.stringify({ password, date, title }),
+  });
+}
+
+export async function deleteNextDate(
+  password: string
+): Promise<{ ok: boolean; nextDate: null }> {
+  return fetchApi<{ ok: boolean; nextDate: null }>("/next-date/delete", {
+    method: "POST",
+    body: JSON.stringify({ password }),
   });
 }

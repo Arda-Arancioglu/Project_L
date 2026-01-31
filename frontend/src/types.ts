@@ -94,10 +94,13 @@ export interface UsageStats {
 }
 
 // Notes / To-do list
+export type NoteCategory = "all" | "travel" | "todo" | "food";
+
 export interface NoteItem {
   id: string;
   text: string;
   done: boolean;
+  category: NoteCategory;
   createdAt: string;
   createdBy: Uploader;
 }

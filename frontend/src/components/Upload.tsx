@@ -212,14 +212,14 @@ export default function Upload({ password, currentUser }: Props) {
             onClick={() => setAlbum("arda")}
             disabled={uploading}
           >
-            Arda
+            {currentUser === "arda" ? "Benim" : "Aşkımın"}
           </button>
           <button
             className={`toggle-btn ${album === "askim" ? "active" : ""}`}
             onClick={() => setAlbum("askim")}
             disabled={uploading}
           >
-            Aşkım
+            {currentUser === "askim" ? "Benim" : "Aşkımın"}
           </button>
         </div>
       </div>
@@ -266,7 +266,16 @@ export default function Upload({ password, currentUser }: Props) {
                     onChange={(e) => updateFile(pf.id, { note: e.target.value })}
                     disabled={uploading}
                   />
-                  <span className="file-size">{formatBytes(pf.file.size)}</span>
+                  <div className="file-meta">
+                    <input
+                      type="date"
+                      value={pf.day}
+                      onChange={(e) => updateFile(pf.id, { day: e.target.value })}
+                      disabled={uploading}
+                      className="date-input"
+                    />
+                    <span className="file-size">{formatBytes(pf.file.size)}</span>
+                  </div>
                 </div>
 
                 {pf.status === "uploading" && (

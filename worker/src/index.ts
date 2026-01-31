@@ -150,6 +150,10 @@ export default {
         return handleSetNextDate(request, env);
       }
 
+      if (path === "/next-date/delete" && request.method === "POST") {
+        return handleDeleteNextDate(request, env);
+      }
+
       // Handle direct R2 uploads via signed URL callback
       if (path.startsWith("/r2/")) {
         return handleR2Upload(request, env, path);
@@ -558,6 +562,7 @@ async function handleAddNote(request: Request, env: Env): Promise<Response> {
     password: string;
     text: string;
     user: "arda" | "askim";
+    category?: string;
   }>();
 
   if (!checkPassword(body.password, env)) {
@@ -571,6 +576,7 @@ async function handleAddNote(request: Request, env: Env): Promise<Response> {
       body: JSON.stringify({
         text: body.text,
         user: body.user,
+        category: body.category || "todo",
       }),
     })
   );
@@ -656,6 +662,24 @@ async function handleSetNextDate(request: Request, env: Env): Promise<Response> 
         date: body.date,
         title: body.title,
       }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleDeleteNextDate(request: Request, env: Env): Promise<Response> {
+  const { password } = await request.json<{ password: string }>();
+
+  if (!checkPassword(password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/next-date/delete", {
+      method: "POST",
     })
   );
 

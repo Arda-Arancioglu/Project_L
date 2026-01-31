@@ -139,7 +139,10 @@ export function Discover({ password, currentUser }: Props) {
       {!currentPhoto ? (
         <div className="discover-empty">
           <p>🎉 Tüm fotoğrafları gördün!</p>
-          <button onClick={loadPhotos}>Tekrar Başla</button>
+          <div className="discover-empty-buttons">
+            <button onClick={loadPhotos}>🔄 Tekrar Başla</button>
+            <button onClick={() => navigate("/")}>🏠 Ana Sayfa</button>
+          </div>
         </div>
       ) : (
         <>

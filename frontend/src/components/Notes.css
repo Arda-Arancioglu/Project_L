@@ -79,11 +79,37 @@
 /* Add note input */
 .add-note {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.add-note input {
+.add-note-category {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cat-btn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.cat-btn.active {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: rgba(100, 200, 255, 0.5);
+}
+
+.add-note-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-note-input input {
   flex: 1;
   padding: 0.75rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -93,12 +119,12 @@
   font-size: 0.9rem;
 }
 
-.add-note input:focus {
+.add-note-input input:focus {
   outline: none;
   border-color: rgba(100, 200, 255, 0.5);
 }
 
-.add-note button {
+.add-note-input button {
   padding: 0.75rem 1rem;
   border: none;
   border-radius: 10px;
@@ -109,9 +135,74 @@
   transition: opacity 0.2s;
 }
 
-.add-note button:disabled {
+.add-note-input button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.category-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #888;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.category-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.category-tab.active {
+  background: rgba(100, 200, 255, 0.15);
+  border-color: rgba(100, 200, 255, 0.4);
+  color: #64c8ff;
+}
+
+.tab-icon {
+  font-size: 1rem;
+}
+
+.tab-label {
+  display: none;
+}
+
+.tab-count {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+}
+
+.category-tab.active .tab-count {
+  background: rgba(100, 200, 255, 0.2);
+}
+
+@media (min-width: 480px) {
+  .tab-label {
+    display: inline;
+  }
+}
+
+/* Note category icons */
+.note-category-icon {
+  font-size: 0.9rem;
+  opacity: 0.7;
 }
 
 /* Notes sections */
@@ -197,7 +288,9 @@
   cursor: pointer;
   padding: 0.25rem;
   opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
 }
 
 .note-item:hover .delete-note-btn {

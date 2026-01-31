@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotes, addNote, toggleNote, deleteNote } from "../api";
-import type { NoteItem, Uploader } from "../types";
+import type { NoteItem, NoteCategory, Uploader } from "../types";
 import "./Notes.css";
 
 interface Props {
@@ -9,11 +9,20 @@ interface Props {
   currentUser: Uploader;
 }
 
+const CATEGORIES: { key: NoteCategory; label: string; icon: string }[] = [
+  { key: "all", label: "Tümü", icon: "📋" },
+  { key: "travel", label: "Gezilecek Yerler", icon: "✈️" },
+  { key: "todo", label: "Yapılacaklar", icon: "✅" },
+  { key: "food", label: "Yenilecekler", icon: "🍽️" },
+];
+
 export function Notes({ password, currentUser }: Props) {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNoteText, setNewNoteText] = useState("");
+  const [activeCategory, setActiveCategory] = useState<NoteCategory>("all");
+  const [newNoteCategory, setNewNoteCategory] = useState<NoteCategory>("todo");
 
   const userLabel = currentUser === "arda" ? "🩵 Arda" : "💗 Aşkım";
 
@@ -36,7 +45,7 @@ export function Notes({ password, currentUser }: Props) {
   async function handleAddNote() {
     if (!newNoteText.trim()) return;
     try {
-      const result = await addNote(password, newNoteText.trim(), currentUser);
+      const result = await addNote(password, newNoteText.trim(), currentUser, newNoteCategory);
       setNotes([result.note, ...notes]);
       setNewNoteText("");
     } catch (err) {
@@ -64,8 +73,18 @@ export function Notes({ password, currentUser }: Props) {
     }
   }
 
-  const activeNotes = notes.filter((n) => !n.done);
-  const completedNotes = notes.filter((n) => n.done);
+  // Filter notes by category
+  const filteredNotes = activeCategory === "all" 
+    ? notes 
+    : notes.filter(n => n.category === activeCategory);
+  
+  const activeNotes = filteredNotes.filter((n) => !n.done);
+  const completedNotes = filteredNotes.filter((n) => n.done);
+
+  // Get category icon for display
+  const getCategoryIcon = (cat: NoteCategory) => {
+    return CATEGORIES.find(c => c.key === cat)?.icon || "📋";
+  };
 
   if (loading) {
     return (
@@ -86,33 +105,70 @@ export function Notes({ password, currentUser }: Props) {
         <span className="notes-user">{userLabel}</span>
       </header>
 
+      {/* Category Tabs */}
+      <div className="category-tabs">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.key}
+            className={`category-tab ${activeCategory === cat.key ? "active" : ""}`}
+            onClick={() => setActiveCategory(cat.key)}
+          >
+            <span className="tab-icon">{cat.icon}</span>
+            <span className="tab-label">{cat.label}</span>
+            <span className="tab-count">
+              {cat.key === "all" 
+                ? notes.filter(n => !n.done).length
+                : notes.filter(n => n.category === cat.key && !n.done).length
+              }
+            </span>
+          </button>
+        ))}
+      </div>
+
       {/* Add new note */}
       <div className="add-note">
-        <input
-          type="text"
-          placeholder="Yeni not veya plan ekle..."
-          value={newNoteText}
-          onChange={(e) => setNewNoteText(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleAddNote()}
-        />
-        <button onClick={handleAddNote} disabled={!newNoteText.trim()}>
-          ➕
-        </button>
+        <div className="add-note-category">
+          {CATEGORIES.filter(c => c.key !== "all").map((cat) => (
+            <button
+              key={cat.key}
+              className={`cat-btn ${newNoteCategory === cat.key ? "active" : ""}`}
+              onClick={() => setNewNoteCategory(cat.key)}
+              title={cat.label}
+            >
+              {cat.icon}
+            </button>
+          ))}
+        </div>
+        <div className="add-note-input">
+          <input
+            type="text"
+            placeholder={`Yeni ${CATEGORIES.find(c => c.key === newNoteCategory)?.label.toLowerCase() || "not"} ekle...`}
+            value={newNoteText}
+            onChange={(e) => setNewNoteText(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleAddNote()}
+          />
+          <button onClick={handleAddNote} disabled={!newNoteText.trim()}>
+            ➕
+          </button>
+        </div>
       </div>
 
       {/* Active notes */}
       {activeNotes.length > 0 && (
         <div className="notes-section">
-          <h2>Yapılacaklar</h2>
+          <h2>
+            {activeCategory === "all" ? "Yapılacaklar" : CATEGORIES.find(c => c.key === activeCategory)?.label}
+          </h2>
           <div className="notes-list">
             {activeNotes.map((note) => (
-              <div key={note.id} className="note-item">
+              <div key={note.id} className={`note-item category-${note.category || "todo"}`}>
                 <button
                   className="check-btn"
                   onClick={() => handleToggle(note.id)}
                 >
                   ⬜
                 </button>
+                <span className="note-category-icon">{getCategoryIcon(note.category || "todo")}</span>
                 <div className="note-content">
                   <p className="note-text">{note.text}</p>
                   <span className="note-author">
@@ -138,13 +194,14 @@ export function Notes({ password, currentUser }: Props) {
           <h2>Tamamlananlar ✓</h2>
           <div className="notes-list">
             {completedNotes.map((note) => (
-              <div key={note.id} className="note-item done">
+              <div key={note.id} className={`note-item done category-${note.category || "todo"}`}>
                 <button
                   className="check-btn"
                   onClick={() => handleToggle(note.id)}
                 >
                   ✅
                 </button>
+                <span className="note-category-icon">{getCategoryIcon(note.category || "todo")}</span>
                 <div className="note-content">
                   <p className="note-text">{note.text}</p>
                   <span className="note-author">
@@ -163,10 +220,15 @@ export function Notes({ password, currentUser }: Props) {
         </div>
       )}
 
-      {notes.length === 0 && (
+      {filteredNotes.length === 0 && (
         <div className="notes-empty">
           <p>Henüz not yok 📝</p>
-          <p className="notes-hint">Planlarınızı ve yapılacakları buraya ekleyin!</p>
+          <p className="notes-hint">
+            {activeCategory === "all" 
+              ? "Planlarınızı ve yapılacakları buraya ekleyin!"
+              : `"${CATEGORIES.find(c => c.key === activeCategory)?.label}" kategorisine not ekleyin!`
+            }
+          </p>
         </div>
       )}
     </div>

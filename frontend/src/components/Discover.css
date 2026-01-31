@@ -95,6 +95,11 @@
   color: #e0e0e0;
 }
 
+.discover-empty-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .discover-empty button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
@@ -103,6 +108,15 @@
   color: #fff;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+
+.discover-empty button:hover {
+  opacity: 0.9;
+}
+
+.discover-empty button:last-child {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .discover-card {
@@ -191,7 +205,9 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .action-btn:hover {

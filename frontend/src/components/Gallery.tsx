@@ -196,8 +196,8 @@ export default function Gallery({ password, currentUser }: Props) {
   const getAlbumLabel = (album: AlbumFilter): string => {
     switch (album) {
       case "all": return "Tümü";
-      case "arda": return "Arda";
-      case "askim": return "Aşkım";
+      case "arda": return currentUser === "arda" ? "Benim" : "Aşkımın";
+      case "askim": return currentUser === "askim" ? "Benim" : "Aşkımın";
       case "us": return "Biz";
     }
   };
@@ -320,7 +320,7 @@ export default function Gallery({ password, currentUser }: Props) {
                       <p className="lightbox-note">"{selectedPhoto.note}"</p>
                       {selectedPhoto.noteBy && (
                         <span className="note-author">
-                          — {selectedPhoto.noteBy === "arda" ? "Arda" : "Aşkım"}
+                          — {selectedPhoto.noteBy === currentUser ? "Ben" : "Aşkım"}
                         </span>
                       )}
                     </>
@@ -341,9 +341,9 @@ export default function Gallery({ password, currentUser }: Props) {
 
               <div className="lightbox-meta">
                 <span className="uploader-badge">
-                  {selectedPhoto.uploader === "arda"
-                    ? "🩵 Arda yükledi"
-                    : "💗 Aşkım yükledi"}
+                  {selectedPhoto.uploader === currentUser
+                    ? (currentUser === "arda" ? "💙 Ben yükledim" : "💗 Ben yükledim")
+                    : (otherUser === "arda" ? "💙 Aşkım yükledi" : "💗 Aşkım yükledi")}
                 </span>
                 {editingDate ? (
                   <div className="date-edit-inline">
@@ -389,7 +389,7 @@ export default function Gallery({ password, currentUser }: Props) {
                 {/* Show if partner liked it */}
                 {selectedPhoto.favoritedBy?.includes(otherUser) && (
                   <span className="partner-liked">
-                    {otherUser === "arda" ? "🩵 Arda beğendi" : "💗 Aşkım beğendi"}
+                    {currentUser === "arda" ? "💗 Aşkım beğendi" : "💙 Aşkım beğendi"}
                   </span>
                 )}
 
