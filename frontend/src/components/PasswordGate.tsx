@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { verifyPassword } from "../api";
-import { savePassword } from "../utils";
 import "./PasswordGate.css";
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (password: string) => void;
 }
 
 export default function PasswordGate({ onSuccess }: Props) {
@@ -15,7 +14,7 @@ export default function PasswordGate({ onSuccess }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) {
-      setError("Please enter the password");
+      setError("Şifreyi gir");
       return;
     }
 
@@ -25,10 +24,9 @@ export default function PasswordGate({ onSuccess }: Props) {
     const valid = await verifyPassword(password);
 
     if (valid) {
-      savePassword(password);
-      onSuccess();
+      onSuccess(password);
     } else {
-      setError("Wrong password 💔");
+      setError("Yanlış şifre 💔");
     }
 
     setLoading(false);
@@ -38,20 +36,20 @@ export default function PasswordGate({ onSuccess }: Props) {
     <div className="password-gate">
       <div className="password-card">
         <div className="heart-icon">💕</div>
-        <h1>Our Gallery</h1>
-        <p>Enter our secret password to continue</p>
+        <h1>Galerimiz</h1>
+        <p>Gizli şifremizi gir</p>
 
         <form onSubmit={handleSubmit}>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Secret password..."
+            placeholder="Şifre..."
             autoFocus
             disabled={loading}
           />
           <button type="submit" disabled={loading}>
-            {loading ? "Checking..." : "Enter 💝"}
+            {loading ? "Kontrol ediliyor..." : "Giriş 💝"}
           </button>
         </form>
 

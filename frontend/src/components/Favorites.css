@@ -1,18 +1,41 @@
-.gallery {
+.favorites {
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
   padding: 1rem;
 }
 
-.gallery-header {
+.favorites-loading,
+.favorites-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #e0e0e0;
+}
+
+.favorites-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #f5576c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.favorites-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
 
-.gallery-header h1 {
+.favorites-header h1 {
   font-size: 1.25rem;
   color: #fff;
   margin: 0;
@@ -34,24 +57,17 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-.header-stats {
-  display: flex;
-  gap: 1rem;
-  color: #888;
-  font-size: 0.75rem;
-  margin-left: auto;
-}
-
-/* Album Tabs */
-.album-tabs {
+.favorites-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
-.album-tab {
-  padding: 0.5rem 1rem;
+.tab {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.6rem 1rem;
   border: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
@@ -61,145 +77,81 @@
   transition: all 0.2s;
 }
 
-.album-tab:hover {
+.tab:hover {
   background: rgba(255, 255, 255, 0.15);
 }
 
-.album-tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.tab.active {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
 }
 
-.gallery-loading,
-.gallery-error {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  color: #e0e0e0;
-}
-
-.spinner {
-  font-size: 3rem;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-.empty-gallery {
+.no-favorites {
   text-align: center;
   padding: 3rem 1rem;
   color: #888;
 }
 
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.empty-gallery h2 {
-  color: #e0e0e0;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-}
-
-.empty-gallery p {
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-}
-
-.empty-gallery button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.photo-grid {
+.favorites-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 0.75rem;
 }
 
-.photo-card {
+.favorite-item {
+  position: relative;
+  aspect-ratio: 1;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s;
-  aspect-ratio: 1;
-  position: relative;
 }
 
-.photo-card:hover {
+.favorite-item:hover {
   transform: scale(1.02);
 }
 
-.photo-card img {
+.favorite-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.photo-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.photo-overlay {
+.favorite-hearts {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 0.5rem;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
-}
-
-.photo-hearts {
+  bottom: 6px;
+  right: 6px;
   display: flex;
   gap: 2px;
-  justify-content: flex-end;
   font-size: 0.9rem;
 }
 
-/* Lightbox */
-.lightbox {
+/* Photo Modal */
+.photo-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
   padding: 1rem;
 }
 
-.lightbox-content {
-  max-width: 95vw;
-  max-height: 95vh;
+.modal-content {
   position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.lightbox-content img {
+.modal-content img {
   max-width: 100%;
-  max-height: 65vh;
-  border-radius: 8px;
+  max-height: 70vh;
   object-fit: contain;
+  border-radius: 8px;
 }
 
 .close-btn {
@@ -214,35 +166,20 @@
   padding: 0.5rem;
 }
 
-.loading-full {
-  color: white;
-  font-size: 1rem;
-  padding: 3rem;
-}
-
-.lightbox-info {
+.modal-info {
   margin-top: 1rem;
   text-align: center;
   width: 100%;
 }
 
-.lightbox-note {
+.modal-info .note {
   color: #ccc;
   font-size: 0.85rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   font-style: italic;
 }
 
-.lightbox-meta {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  color: #888;
-  font-size: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.lightbox-actions {
+.modal-actions {
   display: flex;
   gap: 0.75rem;
   justify-content: center;
@@ -284,21 +221,15 @@
 }
 
 @media (max-width: 480px) {
-  .gallery-header {
-    gap: 0.5rem;
+  .favorites-tabs {
+    flex-direction: column;
   }
   
-  .gallery-header h1 {
-    font-size: 1rem;
+  .tab {
+    min-width: auto;
   }
   
-  .header-stats {
-    width: 100%;
-    margin-left: 0;
-    margin-top: 0.5rem;
-  }
-  
-  .photo-grid {
+  .favorites-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 }

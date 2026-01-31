@@ -9,6 +9,8 @@ import type {
   UploadCommitRequest,
   UploadCommitResponse,
   UsageStats,
+  ToggleFavoriteRequest,
+  Uploader,
 } from "./types";
 
 // In production, this will be your Cloudflare Worker URL
@@ -122,5 +124,15 @@ export async function uploadToSignedUrl(
 
     xhr.onerror = () => reject(new Error("Upload failed"));
     xhr.send(file);
+  });
+}
+
+// Toggle favorite status for a photo
+export async function toggleFavorite(
+  req: ToggleFavoriteRequest
+): Promise<{ favoritedBy: Uploader[] }> {
+  return fetchApi<{ favoritedBy: Uploader[] }>("/photo/favorite", {
+    method: "POST",
+    body: JSON.stringify(req),
   });
 }

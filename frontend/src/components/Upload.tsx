@@ -1,12 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { prepareUpload, uploadToSignedUrl, commitUpload, getUsage } from "../api";
-import { getPassword, generateId, formatBytes, getTodayStr, createThumbnail } from "../utils";
-import type { UsageStats } from "../types";
+import { generateId, formatBytes, getTodayStr, createThumbnail } from "../utils";
+import type { UsageStats, Uploader, Album } from "../types";
 import "./Upload.css";
 
 interface Props {
-  onBack: () => void;
-  onComplete: () => void;
+  password: string;
 }
 
 interface PendingFile {
@@ -19,20 +19,21 @@ interface PendingFile {
   status: "pending" | "uploading" | "done" | "error";
 }
 
-export default function Upload({ onBack, onComplete }: Props) {
+export default function Upload({ password }: Props) {
+  const navigate = useNavigate();
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [uploader, setUploader] = useState<Uploader>("arda");
+  const [album, setAlbum] = useState<Album>("us");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load usage on mount
-  useState(() => {
-    const pw = getPassword();
-    if (pw) {
-      getUsage(pw).then(setUsage).catch(console.error);
+  useEffect(() => {
+    if (password) {
+      getUsage(password).then(setUsage).catch(console.error);
     }
-  });
+  }, [password]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
@@ -82,8 +83,7 @@ export default function Upload({ onBack, onComplete }: Props) {
     totalSize <= 500 * 1024 * 1024;
 
   const handleUpload = async () => {
-    const pw = getPassword();
-    if (!pw || !canUpload) return;
+    if (!password || !canUpload) return;
 
     setUploading(true);
     setError("");
@@ -91,7 +91,7 @@ export default function Upload({ onBack, onComplete }: Props) {
     try {
       // 1. Prepare: get signed URLs
       const prepareRes = await prepareUpload({
-        password: pw,
+        password,
         files: files.map((f) => ({
           name: f.file.name,
           size: f.file.size,
@@ -100,7 +100,7 @@ export default function Upload({ onBack, onComplete }: Props) {
       });
 
       if (!prepareRes.ok || !prepareRes.uploads || !prepareRes.reservationId) {
-        throw new Error(prepareRes.error || "Upload preparation failed");
+        throw new Error(prepareRes.error || "Yükleme hazırlığı başarısız");
       }
 
       // 2. Upload each file (full + thumbnail)
@@ -131,7 +131,7 @@ export default function Upload({ onBack, onComplete }: Props) {
           updateFile(pf.id, { status: "done", progress: 100 });
         } catch (err) {
           updateFile(pf.id, { status: "error" });
-          console.error("Upload error for", pf.file.name, err);
+          console.error("Yükleme hatası:", pf.file.name, err);
         }
       }
 
@@ -143,8 +143,10 @@ export default function Upload({ onBack, onComplete }: Props) {
 
       if (doneFiles.length > 0) {
         await commitUpload({
-          password: pw,
+          password,
           reservationId: prepareRes.reservationId,
+          uploader,
+          album,
           photos: doneFiles.map((f) => ({
             id: prepareRes.uploads![files.findIndex((ff) => ff.id === f.id)].id,
             filename: f.file.name,
@@ -157,9 +159,9 @@ export default function Upload({ onBack, onComplete }: Props) {
 
       // Clean up and go back
       files.forEach((f) => URL.revokeObjectURL(f.preview));
-      onComplete();
+      navigate("/gallery");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Yükleme başarısız");
     }
 
     setUploading(false);
@@ -168,18 +170,18 @@ export default function Upload({ onBack, onComplete }: Props) {
   return (
     <div className="upload-page">
       <header className="upload-header">
-        <button className="back-btn" onClick={onBack} disabled={uploading}>
-          ← Back
+        <button className="back-btn" onClick={() => navigate("/")} disabled={uploading}>
+          ← Geri
         </button>
-        <h1>Add Photos 💝</h1>
+        <h1>Fotoğraf Yükle 💝</h1>
       </header>
 
       {usage && (
         <div className="usage-bar">
           <div className="usage-info">
-            <span>Storage: {formatBytes(usage.totalBytes)} / {formatBytes(usage.maxBytes)}</span>
+            <span>Depolama: {formatBytes(usage.totalBytes)} / {formatBytes(usage.maxBytes)}</span>
             <span>
-              Uploads today: {usage.uploadsToday} / {usage.maxUploadsPerDay}
+              Bugün: {usage.uploadsToday} / {usage.maxUploadsPerDay}
             </span>
           </div>
           <div className="usage-progress">
@@ -190,6 +192,55 @@ export default function Upload({ onBack, onComplete }: Props) {
           </div>
         </div>
       )}
+
+      {/* Uploader Selection */}
+      <div className="selection-group">
+        <label className="selection-label">Kim yüklüyor?</label>
+        <div className="uploader-toggle">
+          <button
+            className={`toggle-btn ${uploader === "arda" ? "active arda" : ""}`}
+            onClick={() => setUploader("arda")}
+            disabled={uploading}
+          >
+            🩵 Arda
+          </button>
+          <button
+            className={`toggle-btn ${uploader === "askim" ? "active askim" : ""}`}
+            onClick={() => setUploader("askim")}
+            disabled={uploading}
+          >
+            💗 Aşkım
+          </button>
+        </div>
+      </div>
+
+      {/* Album Selection */}
+      <div className="selection-group">
+        <label className="selection-label">Albüm</label>
+        <div className="album-toggle">
+          <button
+            className={`toggle-btn ${album === "us" ? "active" : ""}`}
+            onClick={() => setAlbum("us")}
+            disabled={uploading}
+          >
+            Biz
+          </button>
+          <button
+            className={`toggle-btn ${album === "arda" ? "active" : ""}`}
+            onClick={() => setAlbum("arda")}
+            disabled={uploading}
+          >
+            Arda
+          </button>
+          <button
+            className={`toggle-btn ${album === "askim" ? "active" : ""}`}
+            onClick={() => setAlbum("askim")}
+            disabled={uploading}
+          >
+            Aşkım
+          </button>
+        </div>
+      </div>
 
       <div className="upload-area">
         <input
@@ -213,10 +264,10 @@ export default function Upload({ onBack, onComplete }: Props) {
       {files.length > 0 && (
         <>
           <div className="pending-summary">
-            <span>{files.length} photos selected</span>
+            <span>{files.length} fotoğraf seçildi</span>
             <span>{formatBytes(totalSize)}</span>
             {totalSize > remainingSpace && (
-              <span className="warning">⚠️ Exceeds remaining space!</span>
+              <span className="warning">⚠️ Alan yetersiz!</span>
             )}
           </div>
 
@@ -228,15 +279,9 @@ export default function Upload({ onBack, onComplete }: Props) {
                 <div className="file-info">
                   <input
                     type="text"
-                    placeholder="Add a note for this photo..."
+                    placeholder="Not ekle..."
                     value={pf.note}
                     onChange={(e) => updateFile(pf.id, { note: e.target.value })}
-                    disabled={uploading}
-                  />
-                  <input
-                    type="date"
-                    value={pf.day}
-                    onChange={(e) => updateFile(pf.id, { day: e.target.value })}
                     disabled={uploading}
                   />
                   <span className="file-size">{formatBytes(pf.file.size)}</span>
@@ -274,7 +319,7 @@ export default function Upload({ onBack, onComplete }: Props) {
               onClick={handleUpload}
               disabled={!canUpload || uploading}
             >
-              {uploading ? "Uploading..." : `Upload ${files.length} Photos 💕`}
+              {uploading ? "Yükleniyor..." : `${files.length} Fotoğraf Yükle 💕`}
             </button>
           </div>
         </>

@@ -1,48 +1,51 @@
 import { useState, useEffect } from "react";
-import { getGallery, getSignedUrl } from "../api";
-import { getPassword, formatDate, formatBytes } from "../utils";
-import type { GalleryData, PhotoMeta } from "../types";
+import { useNavigate } from "react-router-dom";
+import { getGallery, getSignedUrl, toggleFavorite } from "../api";
+import { formatBytes } from "../utils";
+import type { GalleryData, PhotoMeta, Album, Uploader } from "../types";
 import "./Gallery.css";
 
+type AlbumFilter = Album | "all";
+
 interface Props {
-  onUploadClick: () => void;
+  password: string;
 }
 
-export default function Gallery({ onUploadClick }: Props) {
+export default function Gallery({ password }: Props) {
+  const navigate = useNavigate();
   const [gallery, setGallery] = useState<GalleryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoMeta | null>(null);
   const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  const [albumFilter, setAlbumFilter] = useState<AlbumFilter>("all");
 
   useEffect(() => {
     loadGallery();
-  }, []);
+  }, [password]);
 
   const loadGallery = async () => {
-    const pw = getPassword();
-    if (!pw) return;
+    if (!password) return;
 
     setLoading(true);
     try {
-      const data = await getGallery(pw);
+      const data = await getGallery(password);
       setGallery(data);
 
       // Load thumbnail URLs for all photos
       const urls: Record<string, string> = {};
-      for (const album of data.albums) {
-        for (const photo of album.photos) {
-          try {
-            urls[photo.id] = await getSignedUrl(pw, photo.thumbnailKey);
-          } catch {
-            // Skip failed thumbnails
-          }
+      for (const photo of data.photos) {
+        try {
+          const thumbKey = photo.thumbnailKey || photo.key;
+          urls[photo.id] = await getSignedUrl(password, thumbKey);
+        } catch {
+          // Skip failed thumbnails
         }
       }
       setThumbnailUrls(urls);
     } catch (err) {
-      setError("Failed to load gallery");
+      setError("Galeri yüklenemedi");
       console.error(err);
     }
     setLoading(false);
@@ -52,14 +55,13 @@ export default function Gallery({ onUploadClick }: Props) {
     setSelectedPhoto(photo);
     setFullImageUrl(null);
 
-    const pw = getPassword();
-    if (!pw) return;
+    if (!password) return;
 
     try {
-      const url = await getSignedUrl(pw, photo.fullKey);
+      const url = await getSignedUrl(password, photo.key);
       setFullImageUrl(url);
     } catch {
-      setError("Failed to load photo");
+      setError("Fotoğraf yüklenemedi");
     }
   };
 
@@ -68,11 +70,70 @@ export default function Gallery({ onUploadClick }: Props) {
     setFullImageUrl(null);
   };
 
+  const handleToggleFavorite = async (photo: PhotoMeta, user: Uploader) => {
+    try {
+      const result = await toggleFavorite({
+        password,
+        photoId: photo.id,
+        user,
+      });
+
+      // Update local state
+      if (gallery) {
+        const updatedPhotos = gallery.photos.map((p) =>
+          p.id === photo.id ? { ...p, favoritedBy: result.favoritedBy } : p
+        );
+        setGallery({ ...gallery, photos: updatedPhotos });
+      }
+
+      if (selectedPhoto?.id === photo.id) {
+        setSelectedPhoto({ ...selectedPhoto, favoritedBy: result.favoritedBy });
+      }
+    } catch (err) {
+      console.error("Favori değiştirilemedi:", err);
+    }
+  };
+
+  const handleDownload = async (photo: PhotoMeta) => {
+    try {
+      const url = await getSignedUrl(password, photo.key);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = photo.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error("İndirme başarısız:", err);
+    }
+  };
+
+  const getFilteredPhotos = (): PhotoMeta[] => {
+    if (!gallery) return [];
+    if (albumFilter === "all") return gallery.photos;
+    return gallery.photos.filter((p) => p.album === albumFilter);
+  };
+
+  const getAlbumLabel = (album: AlbumFilter): string => {
+    switch (album) {
+      case "all": return "Tümü";
+      case "arda": return "Arda";
+      case "askim": return "Aşkım";
+      case "us": return "Biz";
+    }
+  };
+
+  const filteredPhotos = getFilteredPhotos();
+
   if (loading) {
     return (
       <div className="gallery-loading">
         <div className="spinner">💕</div>
-        <p>Loading our memories...</p>
+        <p>Anılar yükleniyor...</p>
       </div>
     );
   }
@@ -81,7 +142,7 @@ export default function Gallery({ onUploadClick }: Props) {
     return (
       <div className="gallery-error">
         <p>{error}</p>
-        <button onClick={loadGallery}>Try Again</button>
+        <button onClick={loadGallery}>Tekrar Dene</button>
       </div>
     );
   }
@@ -89,51 +150,62 @@ export default function Gallery({ onUploadClick }: Props) {
   return (
     <div className="gallery">
       <header className="gallery-header">
-        <h1>💕 Our Gallery</h1>
-        <div className="header-stats">
-          <span>{gallery?.totalPhotos || 0} photos</span>
-          <span>{formatBytes(gallery?.totalSize || 0)} used</span>
-        </div>
-        <button className="upload-btn" onClick={onUploadClick}>
-          + Add Photos
+        <button className="back-btn" onClick={() => navigate("/")}>
+          ← Geri
         </button>
+        <h1>📸 Galeri</h1>
+        <div className="header-stats">
+          <span>{gallery?.photos.length || 0} fotoğraf</span>
+          <span>{formatBytes(gallery?.totalSize || 0)}</span>
+        </div>
       </header>
 
-      {!gallery?.albums.length ? (
+      {/* Album Filter Tabs */}
+      <div className="album-tabs">
+        {(["all", "us", "arda", "askim"] as AlbumFilter[]).map((album) => (
+          <button
+            key={album}
+            className={`album-tab ${albumFilter === album ? "active" : ""}`}
+            onClick={() => setAlbumFilter(album)}
+          >
+            {getAlbumLabel(album)}
+          </button>
+        ))}
+      </div>
+
+      {filteredPhotos.length === 0 ? (
         <div className="empty-gallery">
           <div className="empty-icon">📷</div>
-          <h2>No photos yet!</h2>
-          <p>Upload your first memories together</p>
-          <button onClick={onUploadClick}>Upload Photos 💝</button>
+          <h2>Fotoğraf yok</h2>
+          <p>Bu albümde henüz fotoğraf yok</p>
+          <button onClick={() => navigate("/upload")}>Fotoğraf Yükle 💝</button>
         </div>
       ) : (
-        <div className="albums">
-          {gallery.albums.map((album) => (
-            <section key={album.day} className="album">
-              <h2 className="album-date">{formatDate(album.day)}</h2>
-              <div className="photo-grid">
-                {album.photos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="photo-card"
-                    onClick={() => openPhoto(photo)}
-                  >
-                    {thumbnailUrls[photo.id] ? (
-                      <img
-                        src={thumbnailUrls[photo.id]}
-                        alt={photo.note || photo.filename}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="photo-placeholder">📷</div>
-                    )}
-                    {photo.note && (
-                      <div className="photo-note-preview">{photo.note}</div>
-                    )}
+        <div className="photo-grid">
+          {filteredPhotos.map((photo) => (
+            <div
+              key={photo.id}
+              className="photo-card"
+              onClick={() => openPhoto(photo)}
+            >
+              {thumbnailUrls[photo.id] ? (
+                <img
+                  src={thumbnailUrls[photo.id]}
+                  alt={photo.note || photo.filename}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="photo-placeholder">📷</div>
+              )}
+              <div className="photo-overlay">
+                {photo.favoritedBy && photo.favoritedBy.length > 0 && (
+                  <div className="photo-hearts">
+                    {photo.favoritedBy.includes("arda") && <span>🩵</span>}
+                    {photo.favoritedBy.includes("askim") && <span>💗</span>}
                   </div>
-                ))}
+                )}
               </div>
-            </section>
+            </div>
           ))}
         </div>
       )}
@@ -143,19 +215,44 @@ export default function Gallery({ onUploadClick }: Props) {
         <div className="lightbox" onClick={closePhoto}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={closePhoto}>
-              ×
+              ✕
             </button>
             {fullImageUrl ? (
               <img src={fullImageUrl} alt={selectedPhoto.note} />
             ) : (
-              <div className="loading-full">Loading...</div>
+              <div className="loading-full">Yükleniyor...</div>
             )}
-            {selectedPhoto.note && (
-              <div className="lightbox-note">{selectedPhoto.note}</div>
-            )}
-            <div className="lightbox-meta">
-              <span>{formatDate(selectedPhoto.day)}</span>
-              <span>{formatBytes(selectedPhoto.size)}</span>
+            
+            <div className="lightbox-info">
+              {selectedPhoto.note && (
+                <p className="lightbox-note">{selectedPhoto.note}</p>
+              )}
+              
+              <div className="lightbox-meta">
+                <span>{getAlbumLabel(selectedPhoto.album || "us")}</span>
+                <span>{formatBytes(selectedPhoto.size)}</span>
+              </div>
+
+              <div className="lightbox-actions">
+                <button
+                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("arda") ? "active arda" : ""}`}
+                  onClick={() => handleToggleFavorite(selectedPhoto, "arda")}
+                >
+                  🩵 Arda
+                </button>
+                <button
+                  className={`heart-btn ${selectedPhoto.favoritedBy?.includes("askim") ? "active askim" : ""}`}
+                  onClick={() => handleToggleFavorite(selectedPhoto, "askim")}
+                >
+                  💗 Aşkım
+                </button>
+                <button
+                  className="download-btn"
+                  onClick={() => handleDownload(selectedPhoto)}
+                >
+                  ⬇️ İndir
+                </button>
+              </div>
             </div>
           </div>
         </div>

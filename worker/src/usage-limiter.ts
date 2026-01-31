@@ -4,6 +4,9 @@
 // Tracks usage, enforces rate limits, stores photo metadata
 // Guarantees we never exceed free tier limits
 
+type Uploader = "arda" | "askim";
+type Album = "arda" | "askim" | "us";
+
 interface PhotoMeta {
   id: string;
   filename: string;
@@ -11,8 +14,11 @@ interface PhotoMeta {
   uploadedAt: string;
   day: string;
   size: number;
+  key: string;
   thumbnailKey: string;
-  fullKey: string;
+  uploader?: Uploader;
+  album?: Album;
+  favoritedBy?: Uploader[];
 }
 
 interface Reservation {
@@ -81,32 +87,23 @@ export class UsageLimiter implements DurableObject {
       return this.handleCommit(request);
     }
 
+    if (path === "/favorite" && request.method === "POST") {
+      return this.handleToggleFavorite(request);
+    }
+
     return new Response("Not found", { status: 404 });
   }
 
   private async handleGetGallery(): Promise<Response> {
     const data = await this.loadData();
 
-    // Group photos by day
-    const albumMap = new Map<string, PhotoMeta[]>();
-    for (const photo of data.photos) {
-      const existing = albumMap.get(photo.day) || [];
-      existing.push(photo);
-      albumMap.set(photo.day, existing);
-    }
-
-    // Sort albums by day (newest first)
-    const albums = Array.from(albumMap.entries())
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([day, photos]) => ({
-        day,
-        photos: photos.sort(
-          (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-        ),
-      }));
+    // Sort photos by uploadedAt (newest first)
+    const photos = [...data.photos].sort(
+      (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+    );
 
     return Response.json({
-      albums,
+      photos,
       totalSize: data.totalBytes,
       totalPhotos: data.photos.length,
     });
@@ -200,7 +197,9 @@ export class UsageLimiter implements DurableObject {
   private async handleCommit(request: Request): Promise<Response> {
     const body = await request.json<{
       reservationId: string;
-      photos: PhotoMeta[];
+      uploader: Uploader;
+      album: Album;
+      photos: Omit<PhotoMeta, "uploader" | "album" | "favoritedBy">[];
     }>();
 
     const data = await this.loadData();
@@ -221,8 +220,15 @@ export class UsageLimiter implements DurableObject {
       });
     }
 
-    // Add photos to storage
-    data.photos.push(...body.photos);
+    // Add photos to storage with uploader and album
+    const photosWithMeta: PhotoMeta[] = body.photos.map((p) => ({
+      ...p,
+      uploader: body.uploader,
+      album: body.album,
+      favoritedBy: [],
+    }));
+    
+    data.photos.push(...photosWithMeta);
 
     // Update total size
     const addedSize = body.photos.reduce((sum, p) => sum + p.size, 0);
@@ -234,5 +240,42 @@ export class UsageLimiter implements DurableObject {
     await this.saveData();
 
     return Response.json({ ok: true });
+  }
+
+  private async handleToggleFavorite(request: Request): Promise<Response> {
+    const body = await request.json<{
+      photoId: string;
+      user: Uploader;
+    }>();
+
+    const data = await this.loadData();
+    
+    const photo = data.photos.find((p) => p.id === body.photoId);
+    if (!photo) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    // Initialize favoritedBy if not exists
+    if (!photo.favoritedBy) {
+      photo.favoritedBy = [];
+    }
+
+    // Toggle favorite
+    const index = photo.favoritedBy.indexOf(body.user);
+    if (index >= 0) {
+      photo.favoritedBy.splice(index, 1);
+    } else {
+      photo.favoritedBy.push(body.user);
+    }
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      favoritedBy: photo.favoritedBy,
+    });
   }
 }

@@ -2,24 +2,25 @@
 // Couples Gallery - Shared Types
 // ============================================
 
+export type Uploader = "arda" | "askim";
+export type Album = "arda" | "askim" | "us";
+
 export interface PhotoMeta {
   id: string;
   filename: string;
   note: string;
+  key: string; // R2 key for full image
+  thumbnailKey?: string; // R2 key for thumbnail
   uploadedAt: string; // ISO date
   day: string; // YYYY-MM-DD
   size: number; // bytes
-  thumbnailKey: string;
-  fullKey: string;
-}
-
-export interface DayAlbum {
-  day: string; // YYYY-MM-DD
-  photos: PhotoMeta[];
+  uploader?: Uploader;
+  album?: Album;
+  favoritedBy?: Uploader[]; // who favorited this photo
 }
 
 export interface GalleryData {
-  albums: DayAlbum[];
+  photos: PhotoMeta[];
   totalSize: number;
   totalPhotos: number;
 }
@@ -43,6 +44,8 @@ export interface UploadPrepareResponse {
 export interface UploadCommitRequest {
   password: string;
   reservationId: string;
+  uploader: Uploader;
+  album: Album;
   photos: {
     id: string;
     filename: string;
@@ -55,6 +58,12 @@ export interface UploadCommitRequest {
 export interface UploadCommitResponse {
   ok: boolean;
   error?: string;
+}
+
+export interface ToggleFavoriteRequest {
+  password: string;
+  photoId: string;
+  user: Uploader;
 }
 
 export interface UsageStats {

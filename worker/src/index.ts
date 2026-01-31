@@ -96,6 +96,10 @@ export default {
         return handleGetPhotoUrl(request, env);
       }
 
+      if (path === "/photo/favorite" && request.method === "POST") {
+        return handleToggleFavorite(request, env);
+      }
+
       // Handle direct R2 uploads via signed URL callback
       if (path.startsWith("/r2/")) {
         return handleR2Upload(request, env, path);
@@ -227,6 +231,8 @@ async function handleUploadCommit(request: Request, env: Env): Promise<Response>
   const body = await request.json<{
     password: string;
     reservationId: string;
+    uploader: "arda" | "askim";
+    album: "arda" | "askim" | "us";
     photos: {
       id: string;
       filename: string;
@@ -247,6 +253,8 @@ async function handleUploadCommit(request: Request, env: Env): Promise<Response>
       method: "POST",
       body: JSON.stringify({
         reservationId: body.reservationId,
+        uploader: body.uploader,
+        album: body.album,
         photos: body.photos.map((p) => ({
           id: p.id,
           filename: p.filename,
@@ -254,8 +262,8 @@ async function handleUploadCommit(request: Request, env: Env): Promise<Response>
           day: p.day,
           size: p.size,
           uploadedAt: new Date().toISOString(),
+          key: `photos/${p.id}-full`,
           thumbnailKey: `photos/${p.id}-thumb`,
-          fullKey: `photos/${p.id}-full`,
         })),
       }),
     })
@@ -307,6 +315,32 @@ async function generateReadToken(key: string, exp: number, secret: string): Prom
 async function verifyReadToken(key: string, exp: number, token: string, secret: string): Promise<boolean> {
   const expected = await generateReadToken(key, exp, secret);
   return token === expected;
+}
+
+async function handleToggleFavorite(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+    user: "arda" | "askim";
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/favorite", {
+      method: "POST",
+      body: JSON.stringify({
+        photoId: body.photoId,
+        user: body.user,
+      }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
 }
 
 // Handle R2 uploads and reads
