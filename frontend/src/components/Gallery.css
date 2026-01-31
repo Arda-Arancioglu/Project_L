@@ -1,0 +1,255 @@
+.gallery {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeef8 0%, #fff5f5 50%, #fef3f3 100%);
+  padding-bottom: 2rem;
+}
+
+.gallery-header {
+  background: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(255, 150, 180, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.gallery-header h1 {
+  font-size: 1.5rem;
+  color: #e75480;
+  margin: 0;
+}
+
+.header-stats {
+  display: flex;
+  gap: 1rem;
+  color: #999;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #ff6b95 0%, #e75480 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.upload-btn:hover {
+  transform: translateY(-2px);
+}
+
+.gallery-loading,
+.gallery-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.spinner {
+  font-size: 4rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.empty-gallery {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-gallery h2 {
+  color: #e75480;
+  margin-bottom: 0.5rem;
+}
+
+.empty-gallery p {
+  color: #999;
+  margin-bottom: 2rem;
+}
+
+.empty-gallery button {
+  background: linear-gradient(135deg, #ff6b95 0%, #e75480 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.albums {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.album {
+  margin-bottom: 3rem;
+}
+
+.album-date {
+  color: #e75480;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ffd1dc;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.photo-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.photo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(255, 150, 180, 0.2);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  background: #ffeef8;
+}
+
+.photo-note-preview {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  padding: 2rem 0.75rem 0.75rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+}
+
+.close-btn {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.loading-full {
+  color: white;
+  font-size: 1.2rem;
+  padding: 4rem;
+}
+
+.lightbox-note {
+  color: white;
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+  text-align: center;
+  max-width: 600px;
+}
+
+.lightbox-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .gallery-header {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+
+  .header-stats {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .albums {
+    padding: 1rem;
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}

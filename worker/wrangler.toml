@@ -1,0 +1,28 @@
+name = "couples-gallery-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# R2 bucket binding - you MUST create the bucket first via dashboard
+[[r2_buckets]]
+binding = "GALLERY_BUCKET"
+bucket_name = "couples-gallery"
+
+# Durable Objects for rate limiting and usage tracking
+[[durable_objects.bindings]]
+name = "USAGE_LIMITER"
+class_name = "UsageLimiter"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["UsageLimiter"]
+
+# Environment variables - set via `wrangler secret put`
+# GALLERY_PASSWORD - your shared password (set as secret!)
+
+[vars]
+# Hard limits to guarantee free tier (change as needed)
+MAX_TOTAL_BYTES = "10200547328"       # ~9.5 GB hard cap
+MAX_FILES_PER_UPLOAD = "100"
+MAX_UPLOAD_SIZE_BYTES = "524288000"   # 500 MB per batch
+MAX_UPLOADS_PER_DAY = "50"
+SIGNED_URL_EXPIRY_SECONDS = "3600"    # 1 hour
