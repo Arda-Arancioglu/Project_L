@@ -14,7 +14,7 @@ class_name = "UsageLimiter"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["UsageLimiter"]
+new_sqlite_classes = ["UsageLimiter"]
 
 # Environment variables - set via `wrangler secret put`
 # GALLERY_PASSWORD - your shared password (set as secret!)
