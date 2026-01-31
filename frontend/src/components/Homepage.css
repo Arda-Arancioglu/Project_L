@@ -42,9 +42,124 @@
 .homepage-subtitle {
   font-size: 1.5rem;
   color: #e0e0e0;
-  margin: 0 0 2.5rem;
+  margin: 0 0 1.5rem;
   font-weight: 300;
   letter-spacing: 0.2em;
+}
+
+/* Next Date Countdown */
+.next-date-section {
+  margin-bottom: 2rem;
+}
+
+.date-countdown {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.date-countdown:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.countdown-title {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin: 0 0 0.25rem;
+}
+
+.countdown-time {
+  font-size: 1.5rem;
+  color: #fff;
+  margin: 0;
+  font-weight: 600;
+}
+
+.homepage.arda .countdown-time {
+  color: #64c8ff;
+}
+
+.homepage.askim .countdown-time {
+  color: #ff6496;
+}
+
+.countdown-date {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0.25rem 0 0;
+}
+
+.add-date-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  color: #aaa;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-date-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.date-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.date-edit input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.date-edit input:focus {
+  outline: none;
+  border-color: rgba(100, 200, 255, 0.5);
+}
+
+.date-edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.date-edit-buttons button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.date-edit-buttons button:first-child {
+  background: rgba(100, 200, 255, 0.3);
+  color: #64c8ff;
+}
+
+.date-edit-buttons button:first-child:hover {
+  background: rgba(100, 200, 255, 0.4);
+}
+
+.date-edit-buttons button:last-child {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.date-edit-buttons button:last-child:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .homepage-greeting {
@@ -124,6 +239,31 @@
 
 .upload-btn:hover {
   background: linear-gradient(135deg, #3d9ae8 0%, #00dce5 100%);
+}
+
+.discover-btn {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.discover-btn:hover {
+  background: linear-gradient(135deg, #e86088 0%, #e8d035 100%);
+}
+
+.notes-btn {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #333;
+}
+
+.notes-btn:hover {
+  background: linear-gradient(135deg, #96dbd8 0%, #f0c4d0 100%);
+}
+
+.recycle-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.recycle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 @media (max-width: 480px) {

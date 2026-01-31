@@ -100,6 +100,56 @@ export default {
         return handleToggleFavorite(request, env);
       }
 
+      if (path === "/photo/edit" && request.method === "POST") {
+        return handleEditNote(request, env);
+      }
+
+      if (path === "/photo/delete" && request.method === "POST") {
+        return handleDeletePhoto(request, env);
+      }
+
+      if (path === "/photo/restore" && request.method === "POST") {
+        return handleRestorePhoto(request, env);
+      }
+
+      if (path === "/photo/purge" && request.method === "POST") {
+        return handlePermanentDelete(request, env);
+      }
+
+      if (path === "/recycle" && request.method === "POST") {
+        return handleGetRecycleBin(request, env);
+      }
+
+      if (path === "/photo/edit-date" && request.method === "POST") {
+        return handleEditDate(request, env);
+      }
+
+      // Notes / To-do endpoints
+      if (path === "/notes" && request.method === "POST") {
+        return handleGetNotes(request, env);
+      }
+
+      if (path === "/notes/add" && request.method === "POST") {
+        return handleAddNote(request, env);
+      }
+
+      if (path === "/notes/toggle" && request.method === "POST") {
+        return handleToggleNote(request, env);
+      }
+
+      if (path === "/notes/delete" && request.method === "POST") {
+        return handleDeleteNote(request, env);
+      }
+
+      // Next date endpoints
+      if (path === "/next-date" && request.method === "POST") {
+        return handleGetNextDate(request, env);
+      }
+
+      if (path === "/next-date/set" && request.method === "POST") {
+        return handleSetNextDate(request, env);
+      }
+
       // Handle direct R2 uploads via signed URL callback
       if (path.startsWith("/r2/")) {
         return handleR2Upload(request, env, path);
@@ -335,6 +385,276 @@ async function handleToggleFavorite(request: Request, env: Env): Promise<Respons
       body: JSON.stringify({
         photoId: body.photoId,
         user: body.user,
+      }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleEditNote(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+    note: string;
+    user: "arda" | "askim";
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/edit-note", {
+      method: "POST",
+      body: JSON.stringify({
+        photoId: body.photoId,
+        note: body.note,
+        user: body.user,
+      }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleDeletePhoto(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/delete", {
+      method: "POST",
+      body: JSON.stringify({ photoId: body.photoId }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleRestorePhoto(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/restore", {
+      method: "POST",
+      body: JSON.stringify({ photoId: body.photoId }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handlePermanentDelete(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/purge", {
+      method: "POST",
+      body: JSON.stringify({ photoId: body.photoId }),
+    })
+  );
+
+  const result = await res.json<{ ok: boolean; key?: string; thumbnailKey?: string }>();
+  
+  // Delete from R2 if successful
+  if (result.ok && result.key) {
+    try {
+      await env.GALLERY_BUCKET.delete(result.key);
+      if (result.thumbnailKey) {
+        await env.GALLERY_BUCKET.delete(result.thumbnailKey);
+      }
+    } catch (e) {
+      console.error("Failed to delete from R2:", e);
+    }
+  }
+
+  return jsonResponse(result);
+}
+
+async function handleGetRecycleBin(request: Request, env: Env): Promise<Response> {
+  const { password } = await request.json<{ password: string }>();
+  if (!checkPassword(password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(new Request("http://do/recycle"));
+  const data = await res.json();
+
+  return jsonResponse(data);
+}
+
+async function handleEditDate(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    photoId: string;
+    day: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/edit-date", {
+      method: "POST",
+      body: JSON.stringify({
+        photoId: body.photoId,
+        day: body.day,
+      }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+// Notes / To-do handlers
+async function handleGetNotes(request: Request, env: Env): Promise<Response> {
+  const { password } = await request.json<{ password: string }>();
+  if (!checkPassword(password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(new Request("http://do/notes"));
+  const data = await res.json();
+
+  return jsonResponse(data);
+}
+
+async function handleAddNote(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    text: string;
+    user: "arda" | "askim";
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/notes/add", {
+      method: "POST",
+      body: JSON.stringify({
+        text: body.text,
+        user: body.user,
+      }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleToggleNote(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    noteId: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/notes/toggle", {
+      method: "POST",
+      body: JSON.stringify({ noteId: body.noteId }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+async function handleDeleteNote(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    noteId: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/notes/delete", {
+      method: "POST",
+      body: JSON.stringify({ noteId: body.noteId }),
+    })
+  );
+
+  const result = await res.json();
+  return jsonResponse(result);
+}
+
+// Next date handlers
+async function handleGetNextDate(request: Request, env: Env): Promise<Response> {
+  const { password } = await request.json<{ password: string }>();
+  if (!checkPassword(password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(new Request("http://do/next-date"));
+  const data = await res.json();
+
+  return jsonResponse(data);
+}
+
+async function handleSetNextDate(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{
+    password: string;
+    date: string;
+    title: string;
+  }>();
+
+  if (!checkPassword(body.password, env)) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const limiter = getUsageLimiter(env);
+  const res = await limiter.fetch(
+    new Request("http://do/next-date/set", {
+      method: "POST",
+      body: JSON.stringify({
+        date: body.date,
+        title: body.title,
       }),
     })
   );

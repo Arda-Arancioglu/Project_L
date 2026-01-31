@@ -317,6 +317,154 @@
   background: rgba(79, 172, 254, 0.5);
 }
 
+.delete-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff6b6b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 100, 100, 0.35);
+}
+
+/* Note display and edit */
+.note-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.lightbox-note {
+  margin: 0;
+  color: #ccc;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.lightbox-note.empty {
+  color: #666;
+}
+
+.note-author {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.edit-note-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background 0.2s;
+}
+
+.edit-note-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.note-edit {
+  margin-bottom: 0.75rem;
+}
+
+.note-edit textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.note-edit textarea:focus {
+  outline: none;
+  border-color: rgba(100, 200, 255, 0.5);
+}
+
+.note-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.note-edit-actions button {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.note-edit-actions button:first-child {
+  background: rgba(100, 200, 255, 0.3);
+  color: #64c8ff;
+}
+
+.note-edit-actions button:first-child:hover {
+  background: rgba(100, 200, 255, 0.4);
+}
+
+.note-edit-actions button:last-child {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.note-edit-actions button:last-child:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Photo date */
+.photo-date {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.photo-date:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.date-edit-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.date-edit-inline input {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #e0e0e0;
+  font-size: 0.75rem;
+}
+
+.date-edit-inline button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  color: #aaa;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.date-edit-inline button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 @media (max-width: 480px) {
   .gallery-header {
     gap: 0.5rem;

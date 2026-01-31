@@ -1,0 +1,238 @@
+.discover {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #e0e0e0;
+}
+
+.discover-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #f5576c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.discover-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.discover-header h1 {
+  font-size: 1.25rem;
+  color: #fff;
+  margin: 0;
+  font-weight: 500;
+  flex: 1;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #e0e0e0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.discover-user {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.discover.arda .discover-user {
+  color: #64c8ff;
+  background: rgba(100, 200, 255, 0.15);
+}
+
+.discover.askim .discover-user {
+  color: #ff6496;
+  background: rgba(255, 100, 150, 0.15);
+}
+
+.discover-counter {
+  text-align: center;
+  color: #999;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.discover-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #e0e0e0;
+}
+
+.discover-empty button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.discover-card {
+  flex: 1;
+  max-height: 60vh;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease;
+  touch-action: pan-y;
+}
+
+.discover-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #111;
+}
+
+.discover-card.swiping-left {
+  transform: translateX(-150%) rotate(-20deg);
+  opacity: 0;
+}
+
+.discover-card.swiping-right {
+  transform: translateX(150%) rotate(20deg);
+  opacity: 0;
+}
+
+.card-note {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: #fff;
+}
+
+.card-note p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.note-author {
+  font-size: 0.75rem;
+  color: #aaa;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.swipe-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.swipe-hint.left {
+  left: 1rem;
+}
+
+.swipe-hint.right {
+  right: 1rem;
+}
+
+.discover-card:not(.swiping-left):not(.swiping-right) {
+  /* Show hints based on drag */
+}
+
+.discover-actions {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.action-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.action-btn.skip {
+  background: rgba(255, 255, 255, 0.1);
+  color: #999;
+}
+
+.action-btn.skip:hover {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff6b6b;
+}
+
+.action-btn.like {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.action-btn.like:hover {
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
+
+.discover-tip {
+  text-align: center;
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .discover-card {
+    max-height: 55vh;
+  }
+
+  .action-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+}

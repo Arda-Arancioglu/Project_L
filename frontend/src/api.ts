@@ -10,7 +10,14 @@ import type {
   UploadCommitResponse,
   UsageStats,
   ToggleFavoriteRequest,
+  EditNoteRequest,
+  DeletePhotoRequest,
+  RestorePhotoRequest,
+  EditDateRequest,
+  NoteItem,
+  NextDateInfo,
   Uploader,
+  PhotoMeta,
 } from "./types";
 
 // In production, this will be your Cloudflare Worker URL
@@ -134,5 +141,128 @@ export async function toggleFavorite(
   return fetchApi<{ favoritedBy: Uploader[] }>("/photo/favorite", {
     method: "POST",
     body: JSON.stringify(req),
+  });
+}
+
+// Edit photo note
+export async function editNote(
+  req: EditNoteRequest
+): Promise<{ note: string; noteBy: Uploader }> {
+  return fetchApi<{ note: string; noteBy: Uploader }>("/photo/edit", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// Soft delete photo (move to recycle bin)
+export async function deletePhoto(
+  req: DeletePhotoRequest
+): Promise<{ ok: boolean }> {
+  return fetchApi<{ ok: boolean }>("/photo/delete", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// Restore photo from recycle bin
+export async function restorePhoto(
+  req: RestorePhotoRequest
+): Promise<{ ok: boolean }> {
+  return fetchApi<{ ok: boolean }>("/photo/restore", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// Permanently delete photo
+export async function purgePhoto(
+  password: string,
+  photoId: string
+): Promise<{ ok: boolean }> {
+  return fetchApi<{ ok: boolean }>("/photo/purge", {
+    method: "POST",
+    body: JSON.stringify({ password, photoId }),
+  });
+}
+
+// Get recycle bin photos
+export async function getRecycleBin(
+  password: string
+): Promise<{ photos: PhotoMeta[] }> {
+  return fetchApi<{ photos: PhotoMeta[] }>("/recycle", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+// Edit photo date
+export async function editDate(
+  req: EditDateRequest
+): Promise<{ day: string }> {
+  return fetchApi<{ day: string }>("/photo/edit-date", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// Notes / To-do API
+export async function getNotes(
+  password: string
+): Promise<{ notes: NoteItem[] }> {
+  return fetchApi<{ notes: NoteItem[] }>("/notes", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+export async function addNote(
+  password: string,
+  text: string,
+  user: Uploader
+): Promise<{ note: NoteItem }> {
+  return fetchApi<{ note: NoteItem }>("/notes/add", {
+    method: "POST",
+    body: JSON.stringify({ password, text, user }),
+  });
+}
+
+export async function toggleNote(
+  password: string,
+  noteId: string
+): Promise<{ done: boolean }> {
+  return fetchApi<{ done: boolean }>("/notes/toggle", {
+    method: "POST",
+    body: JSON.stringify({ password, noteId }),
+  });
+}
+
+export async function deleteNote(
+  password: string,
+  noteId: string
+): Promise<{ ok: boolean }> {
+  return fetchApi<{ ok: boolean }>("/notes/delete", {
+    method: "POST",
+    body: JSON.stringify({ password, noteId }),
+  });
+}
+
+// Next date API
+export async function getNextDate(
+  password: string
+): Promise<{ nextDate: NextDateInfo | null }> {
+  return fetchApi<{ nextDate: NextDateInfo | null }>("/next-date", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+export async function setNextDate(
+  password: string,
+  date: string,
+  title: string
+): Promise<{ nextDate: NextDateInfo }> {
+  return fetchApi<{ nextDate: NextDateInfo }>("/next-date/set", {
+    method: "POST",
+    body: JSON.stringify({ password, date, title }),
   });
 }

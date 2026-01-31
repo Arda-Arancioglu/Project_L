@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getGallery, getSignedUrl, toggleFavorite } from "../api";
+import { getGallery, getSignedUrl, toggleFavorite, editNote, deletePhoto, editDate } from "../api";
 import { formatBytes } from "../utils";
 import type { GalleryData, PhotoMeta, Album, Uploader } from "../types";
 import "./Gallery.css";
@@ -21,6 +21,10 @@ export default function Gallery({ password, currentUser }: Props) {
   const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [albumFilter, setAlbumFilter] = useState<AlbumFilter>("all");
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [editingDate, setEditingDate] = useState(false);
+  const [dateText, setDateText] = useState("");
 
   const otherUser: Uploader = currentUser === "arda" ? "askim" : "arda";
 
@@ -112,6 +116,74 @@ export default function Gallery({ password, currentUser }: Props) {
       URL.revokeObjectURL(downloadUrl);
     } catch (err) {
       console.error("İndirme başarısız:", err);
+    }
+  };
+
+  const handleEditNote = async () => {
+    if (!selectedPhoto) return;
+    try {
+      const result = await editNote({
+        password,
+        photoId: selectedPhoto.id,
+        note: noteText,
+        user: currentUser,
+      });
+
+      // Update local state
+      if (gallery) {
+        const updatedPhotos = gallery.photos.map((p) =>
+          p.id === selectedPhoto.id
+            ? { ...p, note: result.note, noteBy: result.noteBy }
+            : p
+        );
+        setGallery({ ...gallery, photos: updatedPhotos });
+      }
+
+      setSelectedPhoto({ ...selectedPhoto, note: result.note, noteBy: result.noteBy });
+      setEditingNote(false);
+    } catch (err) {
+      console.error("Not düzenlenemedi:", err);
+    }
+  };
+
+  const handleEditDate = async () => {
+    if (!selectedPhoto || !dateText) return;
+    try {
+      const result = await editDate({
+        password,
+        photoId: selectedPhoto.id,
+        day: dateText,
+      });
+
+      // Update local state
+      if (gallery) {
+        const updatedPhotos = gallery.photos.map((p) =>
+          p.id === selectedPhoto.id ? { ...p, day: result.day } : p
+        );
+        setGallery({ ...gallery, photos: updatedPhotos });
+      }
+
+      setSelectedPhoto({ ...selectedPhoto, day: result.day });
+      setEditingDate(false);
+    } catch (err) {
+      console.error("Tarih düzenlenemedi:", err);
+    }
+  };
+
+  const handleDelete = async (photo: PhotoMeta) => {
+    if (!confirm("Bu fotoğrafı silmek istediğine emin misin? Çöp kutusuna taşınacak.")) {
+      return;
+    }
+    try {
+      await deletePhoto({ password, photoId: photo.id });
+      // Remove from local state
+      if (gallery) {
+        const updatedPhotos = gallery.photos.filter((p) => p.id !== photo.id);
+        setGallery({ ...gallery, photos: updatedPhotos });
+      }
+      closePhoto();
+    } catch (err) {
+      console.error("Silinemedi:", err);
     }
   };
 
@@ -225,16 +297,80 @@ export default function Gallery({ password, currentUser }: Props) {
             ) : (
               <div className="loading-full">Yükleniyor...</div>
             )}
-            
+
             <div className="lightbox-info">
-              {selectedPhoto.note && (
-                <p className="lightbox-note">{selectedPhoto.note}</p>
+              {/* Note section with edit capability */}
+              {editingNote ? (
+                <div className="note-edit">
+                  <textarea
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Not ekle..."
+                    autoFocus
+                  />
+                  <div className="note-edit-actions">
+                    <button onClick={handleEditNote}>💾 Kaydet</button>
+                    <button onClick={() => setEditingNote(false)}>İptal</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="note-display">
+                  {selectedPhoto.note ? (
+                    <>
+                      <p className="lightbox-note">"{selectedPhoto.note}"</p>
+                      {selectedPhoto.noteBy && (
+                        <span className="note-author">
+                          — {selectedPhoto.noteBy === "arda" ? "Arda" : "Aşkım"}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <p className="lightbox-note empty">Not yok</p>
+                  )}
+                  <button
+                    className="edit-note-btn"
+                    onClick={() => {
+                      setNoteText(selectedPhoto.note || "");
+                      setEditingNote(true);
+                    }}
+                  >
+                    ✏️
+                  </button>
+                </div>
               )}
-              
+
               <div className="lightbox-meta">
                 <span className="uploader-badge">
-                  {selectedPhoto.uploader === "arda" ? "🩵 Arda yükledi" : "💗 Aşkım yükledi"}
+                  {selectedPhoto.uploader === "arda"
+                    ? "🩵 Arda yükledi"
+                    : "💗 Aşkım yükledi"}
                 </span>
+                {editingDate ? (
+                  <div className="date-edit-inline">
+                    <input
+                      type="date"
+                      value={dateText}
+                      onChange={(e) => setDateText(e.target.value)}
+                    />
+                    <button onClick={handleEditDate}>✓</button>
+                    <button onClick={() => setEditingDate(false)}>✕</button>
+                  </div>
+                ) : (
+                  <span
+                    className="photo-date"
+                    onClick={() => {
+                      setDateText(selectedPhoto.day);
+                      setEditingDate(true);
+                    }}
+                  >
+                    📅{" "}
+                    {new Date(selectedPhoto.day).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                )}
                 <span>{formatBytes(selectedPhoto.size)}</span>
               </div>
 
@@ -244,21 +380,31 @@ export default function Gallery({ password, currentUser }: Props) {
                   className={`heart-btn main-heart ${selectedPhoto.favoritedBy?.includes(currentUser) ? "active" : ""} ${currentUser}`}
                   onClick={() => handleToggleFavorite(selectedPhoto, currentUser)}
                 >
-                  {currentUser === "arda" ? "🩵" : "💗"} {selectedPhoto.favoritedBy?.includes(currentUser) ? "Beğendin" : "Beğen"}
+                  {currentUser === "arda" ? "🩵" : "💗"}{" "}
+                  {selectedPhoto.favoritedBy?.includes(currentUser)
+                    ? "Beğendin"
+                    : "Beğen"}
                 </button>
-                
+
                 {/* Show if partner liked it */}
                 {selectedPhoto.favoritedBy?.includes(otherUser) && (
                   <span className="partner-liked">
                     {otherUser === "arda" ? "🩵 Arda beğendi" : "💗 Aşkım beğendi"}
                   </span>
                 )}
-                
+
                 <button
                   className="download-btn"
                   onClick={() => handleDownload(selectedPhoto)}
                 >
                   ⬇️ İndir
+                </button>
+
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(selectedPhoto)}
+                >
+                  🗑️ Sil
                 </button>
               </div>
             </div>

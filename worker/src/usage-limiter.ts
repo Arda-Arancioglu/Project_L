@@ -11,6 +11,7 @@ interface PhotoMeta {
   id: string;
   filename: string;
   note: string;
+  noteBy?: Uploader;
   uploadedAt: string;
   day: string;
   size: number;
@@ -19,6 +20,7 @@ interface PhotoMeta {
   uploader?: Uploader;
   album?: Album;
   favoritedBy?: Uploader[];
+  deletedAt?: string;
 }
 
 interface Reservation {
@@ -29,11 +31,26 @@ interface Reservation {
   committed: boolean;
 }
 
+interface NoteItem {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+  createdBy: Uploader;
+}
+
+interface NextDateInfo {
+  date: string;
+  title: string;
+}
+
 interface StorageData {
   photos: PhotoMeta[];
   totalBytes: number;
   reservations: Record<string, Reservation>;
   dailyUploads: Record<string, number>; // date -> count
+  notes: NoteItem[];
+  nextDate: NextDateInfo | null;
 }
 
 export class UsageLimiter implements DurableObject {
@@ -52,6 +69,8 @@ export class UsageLimiter implements DurableObject {
       totalBytes: 0,
       reservations: {},
       dailyUploads: {},
+      notes: [],
+      nextDate: null,
     };
 
     return this.data;
@@ -91,22 +110,98 @@ export class UsageLimiter implements DurableObject {
       return this.handleToggleFavorite(request);
     }
 
+    if (path === "/edit-note" && request.method === "POST") {
+      return this.handleEditNote(request);
+    }
+
+    if (path === "/delete" && request.method === "POST") {
+      return this.handleSoftDelete(request);
+    }
+
+    if (path === "/restore" && request.method === "POST") {
+      return this.handleRestore(request);
+    }
+
+    if (path === "/purge" && request.method === "POST") {
+      return this.handlePermanentDelete(request);
+    }
+
+    if (path === "/recycle") {
+      return this.handleGetRecycleBin();
+    }
+
+    if (path === "/edit-date" && request.method === "POST") {
+      return this.handleEditDate(request);
+    }
+
+    // Notes routes
+    if (path === "/notes") {
+      return this.handleGetNotes();
+    }
+
+    if (path === "/notes/add" && request.method === "POST") {
+      return this.handleAddNote(request);
+    }
+
+    if (path === "/notes/toggle" && request.method === "POST") {
+      return this.handleToggleNote(request);
+    }
+
+    if (path === "/notes/delete" && request.method === "POST") {
+      return this.handleDeleteNote(request);
+    }
+
+    // Next date routes
+    if (path === "/next-date") {
+      return this.handleGetNextDate();
+    }
+
+    if (path === "/next-date/set" && request.method === "POST") {
+      return this.handleSetNextDate(request);
+    }
+
     return new Response("Not found", { status: 404 });
   }
 
   private async handleGetGallery(): Promise<Response> {
     const data = await this.loadData();
 
-    // Sort photos by uploadedAt (newest first)
-    const photos = [...data.photos].sort(
-      (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    );
+    // Auto-purge photos deleted more than 30 days ago
+    await this.autoPurgeOldDeleted();
+
+    // Filter out deleted photos and sort by uploadedAt (newest first)
+    const photos = data.photos
+      .filter((p) => !p.deletedAt)
+      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
     return Response.json({
       photos,
       totalSize: data.totalBytes,
-      totalPhotos: data.photos.length,
+      totalPhotos: photos.length,
     });
+  }
+
+  private async autoPurgeOldDeleted(): Promise<void> {
+    const data = await this.loadData();
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    let changed = false;
+
+    data.photos = data.photos.filter((p) => {
+      if (p.deletedAt) {
+        const deletedTime = new Date(p.deletedAt).getTime();
+        if (deletedTime < thirtyDaysAgo) {
+          // Photo should be purged - subtract from total
+          data.totalBytes -= p.size;
+          changed = true;
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (changed) {
+      await this.saveData();
+    }
   }
 
   private async handleGetUsage(): Promise<Response> {
@@ -249,7 +344,7 @@ export class UsageLimiter implements DurableObject {
     }>();
 
     const data = await this.loadData();
-    
+
     const photo = data.photos.find((p) => p.id === body.photoId);
     if (!photo) {
       return Response.json({
@@ -276,6 +371,251 @@ export class UsageLimiter implements DurableObject {
     return Response.json({
       ok: true,
       favoritedBy: photo.favoritedBy,
+    });
+  }
+
+  private async handleEditNote(request: Request): Promise<Response> {
+    const body = await request.json<{
+      photoId: string;
+      note: string;
+      user: Uploader;
+    }>();
+
+    const data = await this.loadData();
+
+    const photo = data.photos.find((p) => p.id === body.photoId);
+    if (!photo) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    photo.note = body.note;
+    photo.noteBy = body.user;
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      note: photo.note,
+      noteBy: photo.noteBy,
+    });
+  }
+
+  private async handleSoftDelete(request: Request): Promise<Response> {
+    const body = await request.json<{ photoId: string }>();
+
+    const data = await this.loadData();
+
+    const photo = data.photos.find((p) => p.id === body.photoId);
+    if (!photo) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    photo.deletedAt = new Date().toISOString();
+
+    await this.saveData();
+
+    return Response.json({ ok: true });
+  }
+
+  private async handleRestore(request: Request): Promise<Response> {
+    const body = await request.json<{ photoId: string }>();
+
+    const data = await this.loadData();
+
+    const photo = data.photos.find((p) => p.id === body.photoId);
+    if (!photo) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    delete photo.deletedAt;
+
+    await this.saveData();
+
+    return Response.json({ ok: true });
+  }
+
+  private async handlePermanentDelete(request: Request): Promise<Response> {
+    const body = await request.json<{ photoId: string }>();
+
+    const data = await this.loadData();
+
+    const photoIndex = data.photos.findIndex((p) => p.id === body.photoId);
+    if (photoIndex === -1) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    const photo = data.photos[photoIndex];
+    data.photos.splice(photoIndex, 1);
+    data.totalBytes -= photo.size;
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      key: photo.key,
+      thumbnailKey: photo.thumbnailKey,
+    });
+  }
+
+  private async handleGetRecycleBin(): Promise<Response> {
+    const data = await this.loadData();
+
+    // Get only deleted photos, sorted by deletedAt (newest first)
+    const deletedPhotos = data.photos
+      .filter((p) => p.deletedAt)
+      .sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
+
+    return Response.json({
+      photos: deletedPhotos,
+    });
+  }
+
+  private async handleEditDate(request: Request): Promise<Response> {
+    const body = await request.json<{
+      photoId: string;
+      day: string;
+    }>();
+
+    const data = await this.loadData();
+
+    const photo = data.photos.find((p) => p.id === body.photoId);
+    if (!photo) {
+      return Response.json({
+        ok: false,
+        error: "Photo not found",
+      });
+    }
+
+    photo.day = body.day;
+    // Also update uploadedAt to match the new day
+    photo.uploadedAt = new Date(body.day).toISOString();
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      day: photo.day,
+    });
+  }
+
+  // Notes handlers
+  private async handleGetNotes(): Promise<Response> {
+    const data = await this.loadData();
+    if (!data.notes) data.notes = [];
+
+    return Response.json({
+      notes: data.notes,
+    });
+  }
+
+  private async handleAddNote(request: Request): Promise<Response> {
+    const body = await request.json<{
+      text: string;
+      user: Uploader;
+    }>();
+
+    const data = await this.loadData();
+    if (!data.notes) data.notes = [];
+
+    const newNote: NoteItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text: body.text,
+      done: false,
+      createdAt: new Date().toISOString(),
+      createdBy: body.user,
+    };
+
+    data.notes.unshift(newNote);
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      note: newNote,
+    });
+  }
+
+  private async handleToggleNote(request: Request): Promise<Response> {
+    const body = await request.json<{ noteId: string }>();
+
+    const data = await this.loadData();
+    if (!data.notes) data.notes = [];
+
+    const note = data.notes.find((n) => n.id === body.noteId);
+    if (!note) {
+      return Response.json({
+        ok: false,
+        error: "Note not found",
+      });
+    }
+
+    note.done = !note.done;
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      done: note.done,
+    });
+  }
+
+  private async handleDeleteNote(request: Request): Promise<Response> {
+    const body = await request.json<{ noteId: string }>();
+
+    const data = await this.loadData();
+    if (!data.notes) data.notes = [];
+
+    const index = data.notes.findIndex((n) => n.id === body.noteId);
+    if (index === -1) {
+      return Response.json({
+        ok: false,
+        error: "Note not found",
+      });
+    }
+
+    data.notes.splice(index, 1);
+    await this.saveData();
+
+    return Response.json({ ok: true });
+  }
+
+  // Next date handlers
+  private async handleGetNextDate(): Promise<Response> {
+    const data = await this.loadData();
+
+    return Response.json({
+      nextDate: data.nextDate || null,
+    });
+  }
+
+  private async handleSetNextDate(request: Request): Promise<Response> {
+    const body = await request.json<{
+      date: string;
+      title: string;
+    }>();
+
+    const data = await this.loadData();
+
+    data.nextDate = {
+      date: body.date,
+      title: body.title,
+    };
+
+    await this.saveData();
+
+    return Response.json({
+      ok: true,
+      nextDate: data.nextDate,
     });
   }
 }

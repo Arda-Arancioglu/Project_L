@@ -6,6 +6,9 @@ import { Homepage } from "./components/Homepage";
 import Gallery from "./components/Gallery";
 import Upload from "./components/Upload";
 import { Favorites } from "./components/Favorites";
+import { Discover } from "./components/Discover";
+import { RecycleBin } from "./components/RecycleBin";
+import { Notes } from "./components/Notes";
 import { getPassword, clearPassword, savePassword, getRole, saveRole } from "./utils";
 import { verifyPassword } from "./api";
 import type { Uploader } from "./types";
@@ -73,10 +76,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Homepage currentUser={currentUser} />} />
+        <Route path="/" element={<Homepage currentUser={currentUser} password={password} />} />
         <Route path="/gallery" element={<Gallery password={password} currentUser={currentUser} />} />
         <Route path="/upload" element={<Upload password={password} currentUser={currentUser} />} />
         <Route path="/favorites" element={<Favorites password={password} currentUser={currentUser} />} />
+        <Route path="/discover" element={<Discover password={password} currentUser={currentUser} />} />
+        <Route path="/recycle" element={<RecycleBin password={password} currentUser={currentUser} />} />
+        <Route path="/notes" element={<Notes password={password} currentUser={currentUser} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

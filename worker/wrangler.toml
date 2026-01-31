@@ -1,4 +1,4 @@
-name = "couples-gallery-worker"
+name = "nurla-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
@@ -24,5 +24,5 @@ new_sqlite_classes = ["UsageLimiter"]
 MAX_TOTAL_BYTES = "10200547328"       # ~9.5 GB hard cap
 MAX_FILES_PER_UPLOAD = "100"
 MAX_UPLOAD_SIZE_BYTES = "524288000"   # 500 MB per batch
-MAX_UPLOADS_PER_DAY = "50"
+MAX_UPLOADS_PER_DAY = "2000"          # Increased for testing
 SIGNED_URL_EXPIRY_SECONDS = "3600"    # 1 hour
